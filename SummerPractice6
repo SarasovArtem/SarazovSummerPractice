@@ -1,0 +1,124 @@
+import time
+import random
+from functools import partial
+
+
+def quick_sort_three_way(arr):
+    """Быстрая сортировка с разделением на 3 части"""
+    _quick_sort_three_way(arr, 0, len(arr) - 1)
+
+
+def _quick_sort_three_way(arr, low, high):
+    if low >= high:
+        return
+
+    pivot = arr[low]
+    lt = low  # конец элементов < pivot
+    gt = high  # начало элементов > pivot
+    i = low + 1  # текущий элемент
+
+    while i <= gt:
+        if arr[i] < pivot:
+            arr[i], arr[lt] = arr[lt], arr[i]
+            lt += 1
+            i += 1
+        elif arr[i] > pivot:
+            arr[i], arr[gt] = arr[gt], arr[i]
+            gt -= 1
+        else:
+            i += 1
+
+    _quick_sort_three_way(arr, low, lt - 1)
+    _quick_sort_three_way(arr, gt + 1, high)
+
+
+def generate_random_array(n):
+    """Генерация случайного массива"""
+    return [random.randint(0, 1000) for _ in range(n)]
+
+
+def generate_reverse_sorted_array(n):
+    """Генерация обратно отсортированного массива"""
+    return sorted([random.randint(0, 1000) for _ in range(n)], reverse=True)
+
+
+def measure_time(arr):
+    """Измерение времени выполнения сортировки"""
+    arr_copy = arr.copy()
+    start_time = time.time()
+    quick_sort_three_way(arr_copy)
+    return time.time() - start_time, arr_copy
+
+
+def measure_time_std(arr):
+    """Измерение времени выполнения сортировки"""
+    arr_copy = arr.copy()
+    start_time = time.time()
+    arr_copy.sort()
+    return time.time() - start_time, arr_copy
+
+
+def print_array_sample(arr, limit=10):
+    """Вывод части массива с ограничением количества элементов"""
+    if len(arr) <= limit:
+        print(arr)
+    else:
+        print(f"Первые {limit} элементов:", arr[:limit])
+        print(f"Последние {limit} элементов:", arr[-limit:])
+
+
+def main():
+    print("Программа сравнения сортировок")
+    print("1 - Ввести массив вручную")
+    print("2 - Сгенерировать случайный массив")
+    print("3 - Сгенерировать обратно отсортированный массив")
+
+    choice = input("Выберите вариант (1-3): ")
+
+    if choice == '1':
+        arr = list(map(int, input("Введите элементы массива через пробел: ").split()))
+    elif choice in ('2', '3'):
+        n = int(input("Введите количество элементов: "))
+        if choice == '2':
+            arr = generate_random_array(n)
+        else:
+            arr = generate_reverse_sorted_array(n)
+    else:
+        print("Неверный выбор")
+        return
+
+    # Порог для полного вывода массива
+    SMALL_ARRAY_THRESHOLD = 20
+
+    print("\nИсходный массив:")
+    print_array_sample(arr, SMALL_ARRAY_THRESHOLD)
+
+    # Сортировка стандартной функцией
+    std_time, std_sorted = measure_time_std(arr)
+    print("\nРезультат стандартной сортировки:")
+    print_array_sample(std_sorted, SMALL_ARRAY_THRESHOLD)
+    print(f"Время стандартной сортировки: {std_time:.6f} сек")
+
+    # Сортировка нашей функцией
+    custom_time, custom_sorted = measure_time(arr)
+    print("\nРезультат нашей сортировки:")
+    print_array_sample(custom_sorted, SMALL_ARRAY_THRESHOLD)
+    print(f"Время нашей сортировки: {custom_time:.6f} сек")
+
+    # Проверка корректности
+    if std_sorted == custom_sorted:
+        print("\nРезультаты сортировок идентичны!")
+    else:
+        print("\nОшибка: результаты сортировок различаются!")
+
+    # Вычисление ускорения
+    if custom_time > 0:
+        speedup = std_time / custom_time
+        print(f"Ускорение нашей сортировки относительно стандартной: {speedup:.2f}x")
+    else:
+        print("Время выполнения слишком мало для вычисления ускорения")
+
+
+if __name__ == "__main__":
+    main()
+    
