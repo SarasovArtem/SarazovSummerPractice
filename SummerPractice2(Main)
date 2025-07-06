@@ -1,0 +1,89 @@
+from rectangle import Rectangle
+from rhombus import Rhombus
+from ellipse import Ellipse
+
+
+def input_rectangle():
+    """Ввод параметров прямоугольника с клавиатуры"""
+    while True:
+        try:
+            width = float(input("Введите ширину прямоугольника: "))
+            height = float(input("Введите высоту прямоугольника: "))
+            if width <= 0 or height <= 0:
+                print("Значения должны быть положительными. Попробуйте снова.")
+                continue
+            return Rectangle(width, height)
+        except ValueError:
+            print("Ошибка! Введите числовые значения.")
+
+
+def input_rhombus():
+    """Ввод параметров ромба с клавиатуры"""
+    while True:
+        try:
+            side = float(input("Введите длину стороны ромба: "))
+            angle = float(input("Введите угол между сторонами (в градусах): "))
+            if side <= 0 or angle <= 0 or angle >= 180:
+                print("Некорректные значения. Длина стороны должна быть положительной, угол между 0 и 180 градусами.")
+                continue
+            return Rhombus(side, angle)
+        except ValueError:
+            print("Ошибка! Введите числовые значения.")
+
+
+def input_ellipse():
+    """Ввод параметров эллипса с клавиатуры"""
+    while True:
+        try:
+            major = float(input("Введите длину большой полуоси эллипса: "))
+            minor = float(input("Введите длину малой полуоси эллипса: "))
+            if major <= 0 or minor <= 0 or minor > major:
+                print(
+                    "Некорректные значения. Полуоси должны быть положительными, большая полуось должна быть больше малой.")
+                continue
+            return Ellipse(major, minor)
+        except ValueError:
+            print("Ошибка! Введите числовые значения.")
+
+
+def demonstrate_shape(shape):
+    """Демонстрация работы методов фигуры"""
+    print("\n" + "=" * 40)
+    print(shape.info())
+    print("=" * 40 + "\n")
+
+
+def main():
+    """Основная функция программы"""
+    print("Демонстрация работы классов геометрических фигур")
+
+    while True:
+        print("\nВыберите фигуру для демонстрации:")
+        print("1 - Прямоугольник")
+        print("2 - Ромб")
+        print("3 - Эллипс")
+        print("0 - Выход")
+
+        choice = input("Ваш выбор: ")
+
+        if choice == "1":
+            print("\nСоздание прямоугольника:")
+            rectangle = input_rectangle()
+            demonstrate_shape(rectangle)
+        elif choice == "2":
+            print("\nСоздание ромба:")
+            rhombus = input_rhombus()
+            demonstrate_shape(rhombus)
+        elif choice == "3":
+            print("\nСоздание эллипса:")
+            ellipse = input_ellipse()
+            demonstrate_shape(ellipse)
+        elif choice == "0":
+            print("Программа завершена.")
+            break
+        else:
+            print("Некорректный ввод. Попробуйте снова.")
+
+
+if __name__ == "__main__":
+    main()
