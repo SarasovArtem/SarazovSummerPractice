@@ -1,0 +1,122 @@
+from datetime import datetime, date
+
+
+class Worker:
+    def __init__(self, surname="", salary=0.0, birth_date=None):
+        """
+        Конструктор класса Worker
+
+        :param surname: Фамилия работника
+        :param salary: Оклад работника
+        :param birth_date: Дата рождения (в формате 'дд.мм.гггг' или как объект date)
+        """
+        self.surname = surname
+        self.salary = salary
+
+        if birth_date is None:
+            self.birth_date = date.today()
+        elif isinstance(birth_date, str):
+            self.birth_date = datetime.strptime(birth_date, "%d.%m.%Y").date()
+        else:
+            self.birth_date = birth_date
+
+    def __del__(self):
+        """Деструктор класса с сообщением об уничтожении объекта"""
+        print(f"Объект Worker ({self.surname}) уничтожен.")
+
+    def calculate_age(self):
+        """Вычисляет возраст работника на текущую дату"""
+        today = date.today()
+        age = today.year - self.birth_date.year
+
+        # Проверяем, был ли уже день рождения в этом году
+        if (today.month, today.day) < (self.birth_date.month, self.birth_date.day):
+            age -= 1
+
+        return age
+
+    def days_until_50(self):
+        """Вычисляет сколько дней осталось до 50-летия работника"""
+        age = self.calculate_age()
+
+        # Если уже 50 или больше лет
+        if age >= 50:
+            return 0
+
+        # Вычисляем дату следующего дня рождения
+        today = date.today()
+        next_birthday = date(today.year, self.birth_date.month, self.birth_date.day)
+
+        # Если день рождения в этом году уже прошел
+        if today > next_birthday:
+            next_birthday = date(today.year + 1, self.birth_date.month, self.birth_date.day)
+
+        # Вычисляем дату 50-летия
+        fifty_birthday = date(
+            self.birth_date.year + 50,
+            self.birth_date.month,
+            self.birth_date.day
+        )
+
+        # Если 50 лет будет в этом году
+        if fifty_birthday.year == today.year:
+            return (fifty_birthday - today).days
+
+        # Если 50 лет будет в будущем
+        if next_birthday < fifty_birthday:
+            return (fifty_birthday - today).days
+
+        return (fifty_birthday - today).days
+
+    def get_info(self):
+        """Формирует строку с информацией о работнике"""
+        birth_date_str = self.birth_date.strftime("%d.%m.%Y")
+        age = self.calculate_age()
+        days_to_50 = self.days_until_50()
+
+        info = (
+            f"Фамилия: {self.surname}\n"
+            f"Оклад: {self.salary:.2f}\n"
+            f"Дата рождения: {birth_date_str}\n"
+            f"Возраст: {age} лет\n"
+            f"Дней до 50 лет: {days_to_50}"
+        )
+        return info
+
+    def input_from_keyboard(self):
+        """Позволяет ввести данные работника с клавиатуры"""
+        self.surname = input("Введите фамилию работника: ")
+        self.salary = float(input("Введите оклад работника: "))
+
+        while True:
+            try:
+                date_str = input("Введите дату рождения (дд.мм.гггг): ")
+                self.birth_date = datetime.strptime(date_str, "%d.%m.%Y").date()
+                break
+            except ValueError:
+                print("Ошибка! Введите дату в формате дд.мм.гггг")
+
+
+def main():
+    # Создание трех объектов класса Worker разными способами
+
+    # 1. Объект с конструктором по умолчанию
+    worker1 = Worker()
+
+    # 2. Объект с константными значениями
+    worker2 = Worker("Иванов", 45000.50, "15.05.1980")
+
+    # 3. Объект с вводом данных с клавиатуры
+    worker3 = Worker()
+    print("\nВведите данные для третьего работника:")
+    worker3.input_from_keyboard()
+
+    # Вывод информации о работниках
+    print("\nИнформация о работниках:")
+    print("\nРаботник 1:\n", worker1.get_info(), sep='')
+    print("\nРаботник 2:\n", worker2.get_info(), sep='')
+    print("\nРаботник 3:\n", worker3.get_info(), sep='')
+
+
+if __name__ == "__main__":
+    main()
