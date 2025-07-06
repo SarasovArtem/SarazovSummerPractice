@@ -1,0 +1,36 @@
+from shape import Shape
+import math
+
+
+class Rhombus(Shape):
+    """Класс ромба, наследующий от Shape"""
+
+    def __init__(self, side, angle):
+        """
+        Конструктор ромба
+        :param side: длина стороны
+        :param angle: угол между сторонами (в градусах)
+        """
+        super().__init__("Ромб")  # Вызов конструктора родительского класса
+        self._side = side
+        self._angle = angle
+
+    @property
+    def side(self):
+        """Длина стороны ромба"""
+        return self._side
+
+    @property
+    def angle(self):
+        """Угол между сторонами ромба (в градусах)"""
+        return self._angle
+
+    def area(self):
+        """Вычисление площади ромба"""
+        return self.side ** 2 * math.sin(math.radians(self.angle))
+
+    def perimeter(self):
+        """Вычисление периметра ромба"""
+        return 4 * self.side
+
+    # Метод info не перегружается - используется реализация из родительского класса
