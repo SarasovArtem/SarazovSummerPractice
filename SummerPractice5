@@ -1,0 +1,200 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider, Button, RadioButtons
+
+
+def calculate_function(x, a, b, c, d):
+    """Подпрограмма для расчета значений функции"""
+    return (a * x ** 3 + b * x ** 2 + c * x + d) * np.sin(x ** 2)
+
+
+def plot_function():
+    # Исходные параметры
+    a, b, c, d = 0.1, -0.5, 2.0, 1.0
+    x_min, x_max = -5, 5
+    num_points = 500
+    line_width = 1
+    plot_style = 'line'
+
+    # Начальные цвета (RGB в диапазоне 0-1)
+    line_color = np.array([0.0, 0.0, 1.0])  # Синий
+    bg_color = np.array([1.0, 1.0, 1.0])  # Белый
+
+    # Создаем фигуру и оси
+    fig, ax = plt.subplots(figsize=(12, 5.5))
+    plt.subplots_adjust(bottom=0.45, left=0.1, right=0.95)
+
+    # Генерируем точки
+    x = np.linspace(x_min, x_max, num_points)
+    y = calculate_function(x, a, b, c, d)
+
+    # Первоначальное построение графика
+    if plot_style == 'line':
+        line, = ax.plot(x, y, color=line_color, linewidth=line_width)
+    else:
+        line, = ax.plot(x, y, 'o', color=line_color, markersize=line_width * 2)
+
+    # Настройка осей и сетки
+    ax.set_xlabel('Ось X', fontsize=12)
+    ax.set_ylabel('Ось Y', fontsize=12)
+    ax.set_title('График функции: y = (a·x³ + b·x² + c·x + d)·sin(x²)', fontsize=14, pad=20)
+    ax.grid(True, linestyle='--', alpha=0.7)
+    ax.axhline(0, color='black', linewidth=0.8)
+    ax.axvline(0, color='black', linewidth=0.8)
+    ax.set_facecolor(bg_color)
+
+    # Создаем слайдеры для параметров
+    axcolor = 'lightgoldenrodyellow'
+
+    # Создаем слайдеры для параметров функции
+    ax_a = plt.axes([0.1, 0.35, 0.15, 0.03])
+    ax_b = plt.axes([0.1, 0.30, 0.15, 0.03])
+    ax_c = plt.axes([0.1, 0.25, 0.15, 0.03])
+    ax_d = plt.axes([0.1, 0.20, 0.15, 0.03])
+
+    slider_a = Slider(ax_a, 'a', -2.0, 2.0, valinit=a)
+    slider_b = Slider(ax_b, 'b', -2.0, 2.0, valinit=b)
+    slider_c = Slider(ax_c, 'c', -5.0, 5.0, valinit=c)
+    slider_d = Slider(ax_d, 'd', -5.0, 5.0, valinit=d)
+
+    # Слайдеры для диапазона X
+    ax_xmin = plt.axes([0.1, 0.15, 0.15, 0.03])
+    ax_xmax = plt.axes([0.1, 0.10, 0.15, 0.03])
+
+    slider_xmin = Slider(ax_xmin, 'X min', -10, 0, valinit=x_min)
+    slider_xmax = Slider(ax_xmax, 'X max', 0, 10, valinit=x_max)
+
+    # Слайдеры для цвета графика (R, G, B)
+    ax_line_r = plt.axes([0.35, 0.3, 0.15, 0.03])
+    ax_line_g = plt.axes([0.35, 0.25, 0.15, 0.03])
+    ax_line_b = plt.axes([0.35, 0.2, 0.15, 0.03])
+
+    slider_line_r = Slider(ax_line_r, 'R', 0.0, 1.0, valinit=line_color[0], orientation='horizontal')
+    slider_line_g = Slider(ax_line_g, 'G', 0.0, 1.0, valinit=line_color[1], orientation='horizontal')
+    slider_line_b = Slider(ax_line_b, 'B', 0.0, 1.0, valinit=line_color[2], orientation='horizontal')
+
+    # Слайдеры для цвета фона (R, G, B)
+    ax_bg_r = plt.axes([0.55, 0.3, 0.15, 0.03])
+    ax_bg_g = plt.axes([0.55, 0.25, 0.15, 0.03])
+    ax_bg_b = plt.axes([0.55, 0.2, 0.15, 0.03])
+
+    slider_bg_r = Slider(ax_bg_r, 'R', 0.0, 1.0, valinit=bg_color[0], orientation='horizontal')
+    slider_bg_g = Slider(ax_bg_g, 'G', 0.0, 1.0, valinit=bg_color[1], orientation='horizontal')
+    slider_bg_b = Slider(ax_bg_b, 'B', 0.0, 1.0, valinit=bg_color[2], orientation='horizontal')
+
+    # Кнопки для стиля графика (справа)
+    rax_style = plt.axes([0.8, 0.2, 0.15, 0.135], facecolor=axcolor)
+    radio_style = RadioButtons(rax_style, ('line', 'points', 'line+points'), active=0)
+
+    # Слайдер для ширины линии
+    ax_width = plt.axes([0.4, 0.1, 0.35, 0.03])
+    slider_width = Slider(ax_width, 'line_width', 0.1, 10, valinit=line_width, orientation='horizontal')
+
+    # Кнопка сброса
+    reset_ax = plt.axes([0.1, 0.02, 0.1, 0.04])
+    button_reset = Button(reset_ax, 'Сброс')
+
+    def update(val=None):
+        # Обновление графика при изменении параметров
+        a = slider_a.val
+        b = slider_b.val
+        c = slider_c.val
+        d = slider_d.val
+        x_min = slider_xmin.val
+        x_max = slider_xmax.val
+
+        x = np.linspace(x_min, x_max, num_points)
+        y = calculate_function(x, a, b, c, d)
+
+        line.set_data(x, y)
+
+        # Автомасштабирование
+        y_min, y_max = np.min(y), np.max(y)
+        y_padding = 0.1 * (y_max - y_min) if y_max != y_min else 1
+        ax.set_ylim(y_min - y_padding, y_max + y_padding)
+
+        # Обновление цвета графика
+        line_color = np.array([slider_line_r.val, slider_line_g.val, slider_line_b.val])
+        line.set_color(line_color)
+
+        # Обновление цвета фона
+        bg_color = np.array([slider_bg_r.val, slider_bg_g.val, slider_bg_b.val])
+        ax.set_facecolor(bg_color)
+
+        # Изменение ширины линии графика
+        line.set_linewidth(slider_width.val)
+        line.set_markersize(slider_width.val*2)
+
+        text_color = 'black'
+
+        ax.title.set_color(text_color)
+        ax.xaxis.label.set_color(text_color)
+        ax.yaxis.label.set_color(text_color)
+        ax.tick_params(axis='x', colors=text_color)
+        ax.tick_params(axis='y', colors=text_color)
+
+        fig.canvas.draw_idle()
+
+    def update_style(label):
+        # Изменение стиля графика
+        if label == 'line':
+            line.set_linestyle('-')
+            line.set_marker('')
+        elif label == 'points':
+            line.set_linestyle('')
+            line.set_marker('o')
+            line.set_markersize(line_width)
+        else:  # line+points
+            line.set_linestyle('-')
+            line.set_marker('o')
+            line.set_markersize(line_width)
+        update()
+
+    def reset(event):
+        # Сброс параметров к начальным значениям
+        slider_a.reset()
+        slider_b.reset()
+        slider_c.reset()
+        slider_d.reset()
+        slider_xmin.reset()
+        slider_xmax.reset()
+
+        # Сброс цветов
+        slider_line_r.set_val(0.0)
+        slider_line_g.set_val(0.0)
+        slider_line_b.set_val(1.0)
+
+        slider_bg_r.set_val(1.0)
+        slider_bg_g.set_val(1.0)
+        slider_bg_b.set_val(1.0)
+
+    # Подключаем обработчики событий
+    slider_a.on_changed(update)
+    slider_b.on_changed(update)
+    slider_c.on_changed(update)
+    slider_d.on_changed(update)
+    slider_xmin.on_changed(update)
+    slider_xmax.on_changed(update)
+
+    slider_line_r.on_changed(update)
+    slider_line_g.on_changed(update)
+    slider_line_b.on_changed(update)
+
+    slider_bg_r.on_changed(update)
+    slider_bg_g.on_changed(update)
+    slider_bg_b.on_changed(update)
+
+    radio_style.on_clicked(update_style)
+
+    slider_width.on_changed(update)
+
+    button_reset.on_clicked(reset)
+
+    # Первоначальное обновление
+    update()
+
+    plt.show()
+
+
+if __name__ == "__main__":
+    plot_function()
