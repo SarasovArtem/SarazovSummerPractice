@@ -1,0 +1,39 @@
+from shape import Shape
+
+
+class Rectangle(Shape):
+    """Класс прямоугольника, наследующий от Shape"""
+
+    def __init__(self, width, height):
+        """
+        Конструктор прямоугольника
+        :param width: ширина
+        :param height: высота
+        """
+        super().__init__("Прямоугольник")  # Вызов конструктора родительского класса
+        self._width = width
+        self._height = height
+
+    @property
+    def width(self):
+        """Ширина прямоугольника"""
+        return self._width
+
+    @property
+    def height(self):
+        """Высота прямоугольника"""
+        return self._height
+
+    def area(self):
+        """Вычисление площади прямоугольника"""
+        return self.width * self.height
+
+    def perimeter(self):
+        """Вычисление периметра прямоугольника"""
+        return 2 * (self.width + self.height)
+
+    def info(self):
+        """Перегруженный метод для получения информации о прямоугольнике"""
+        return (f"{super().info()}\n"
+                f"Ширина: {self.width}\n"
+                f"Высота: {self.height}")
