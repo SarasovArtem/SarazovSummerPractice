@@ -1,0 +1,676 @@
+import csv
+import os
+from typing import Dict, List, Optional
+
+
+class ProfessionalCertificate:
+    """Класс для представления профессионального сертификата"""
+
+    def __init__(self, id: int, number: int):
+        self.id = id
+        self.number = number
+
+
+class Doctor:
+    """Класс для представления врача"""
+
+    def __init__(self, id: int, full_name: str, age: int):
+        self.id = id
+        self.full_name = full_name
+        self.age = age
+
+
+class Child:
+    """Класс для представления ребенка"""
+
+    def __init__(self, id: int, full_name: str, father_name: str, mother_name: str,
+                 age: int, cert_id: int, doctor_id: int):
+        self.id = id
+        self.full_name = full_name
+        self.father_name = father_name
+        self.mother_name = mother_name
+        self.age = age
+        self.cert_id = cert_id
+        self.doctor_id = doctor_id
+
+
+class Database:
+    """Класс для работы с базой данных"""
+
+    def __init__(self):
+        self.certificates: Dict[int, ProfessionalCertificate] = {}
+        self.doctors: Dict[int, Doctor] = {}
+        self.children: Dict[int, Child] = {}
+        self.next_cert_id = 1
+        self.next_doctor_id = 1
+        self.next_child_id = 1
+
+        # Инициализация тестовыми данными
+        self.initialize_sample_data()
+
+    def initialize_sample_data(self):
+        """Инициализация базы данных тестовыми данными"""
+        # Добавляем сертификаты
+        self.add_certificate(1001)
+        self.add_certificate(1002)
+        self.add_certificate(1003)
+
+        # Добавляем врачей
+        self.add_doctor("Иванов Иван Иванович", 45)
+        self.add_doctor("Петрова Мария Сергеевна", 35)
+        self.add_doctor("Сидоров Алексей Владимирович", 28)
+        self.add_doctor("Кузнецова Ольга Дмитриевна", 55)
+        self.add_doctor("Смирнов Дмитрий Алексеевич", 65)
+
+        # Добавляем детей
+        self.add_child("Смирнов Алексей Петрович", "Смирнов Петр Олегович",
+                       "Смирнова Анна Васильевна", 8, 1, 1)
+        self.add_child("Иванова Мария Сергеевна", "Иванов Сергей Николаевич",
+                       "Петрова Елена Викторовна", 12, 2, 2)
+        self.add_child("Козлов Артем Дмитриевич", "Козлов Дмитрий Сергеевич",
+                       "Козлова Татьяна Ивановна", 5, 3, 3)
+        self.add_child("Николаева София Алексеевна", "Николаев Алексей Петрович",
+                       "Соколова Ирина Дмитриевна", 9, 1, 4)
+        self.add_child("Федоров Максим Игоревич", "Федоров Игорь Васильевич",
+                       "Федорова Светлана Юрьевна", 15, 2, 5)
+
+    # Методы для работы с сертификатами
+    def add_certificate(self, number: int):
+        """Добавление нового сертификата"""
+        self.certificates[self.next_cert_id] = ProfessionalCertificate(self.next_cert_id, number)
+        self.next_cert_id += 1
+        print(f"Сертификат №{number} успешно добавлен!")
+
+    def delete_certificate(self, cert_id: int):
+        """Удаление сертификата"""
+        if cert_id in self.certificates:
+            # Проверяем, не используется ли сертификат
+            for child in self.children.values():
+                if child.cert_id == cert_id:
+                    print("Ошибка: Этот сертификат используется и не может быть удален")
+                    return
+
+            del self.certificates[cert_id]
+            print(f"Сертификат с ID {cert_id} удален.")
+        else:
+            print(f"Сертификат с ID {cert_id} не найден.")
+
+    def edit_certificate(self, cert_id: int, new_number: int):
+        """Редактирование сертификата"""
+        if cert_id in self.certificates:
+            self.certificates[cert_id].number = new_number
+            print(f"Сертификат с ID {cert_id} успешно обновлен!")
+        else:
+            print(f"Сертификат с ID {cert_id} не найден.")
+
+    # Методы для работы с врачами
+    def add_doctor(self, full_name: str, age: int):
+        """Добавление нового врача"""
+        self.doctors[self.next_doctor_id] = Doctor(self.next_doctor_id, full_name, age)
+        self.next_doctor_id += 1
+        print(f"Врач {full_name} успешно добавлен!")
+
+    def delete_doctor(self, doctor_id: int):
+        """Удаление врача"""
+        if doctor_id in self.doctors:
+            # Проверяем, не используется ли врач
+            for child in self.children.values():
+                if child.doctor_id == doctor_id:
+                    print("Ошибка: Этот врач назначен детям и не может быть удален")
+                    return
+
+            del self.doctors[doctor_id]
+            print(f"Врач с ID {doctor_id} удален.")
+        else:
+            print(f"Врач с ID {doctor_id} не найден.")
+
+    def edit_doctor(self, doctor_id: int, full_name: Optional[str] = None, age: Optional[int] = None):
+        """Редактирование врача"""
+        if doctor_id in self.doctors:
+            doctor = self.doctors[doctor_id]
+            if full_name is not None:
+                doctor.full_name = full_name
+            if age is not None:
+                doctor.age = age
+            print(f"Врач с ID {doctor_id} успешно обновлен!")
+        else:
+            print(f"Врач с ID {doctor_id} не найден.")
+
+    # Методы для работы с детьми
+    def add_child(self, full_name: str, father_name: str, mother_name: str,
+                  age: int, cert_id: int, doctor_id: int):
+        """Добавление нового ребенка"""
+        if cert_id not in self.certificates:
+            print(f"Ошибка: Сертификат с ID {cert_id} не существует")
+            return
+
+        if doctor_id not in self.doctors:
+            print(f"Ошибка: Врач с ID {doctor_id} не существует")
+            return
+
+        self.children[self.next_child_id] = Child(
+            self.next_child_id, full_name, father_name, mother_name,
+            age, cert_id, doctor_id
+        )
+        self.next_child_id += 1
+        print(f"Ребенок {full_name} успешно добавлен!")
+
+    def delete_child(self, child_id: int):
+        """Удаление ребенка"""
+        if child_id in self.children:
+            del self.children[child_id]
+            print(f"Ребенок с ID {child_id} удален.")
+        else:
+            print(f"Ребенок с ID {child_id} не найден.")
+
+    def edit_child(self, child_id: int, full_name: Optional[str] = None,
+                   father_name: Optional[str] = None, mother_name: Optional[str] = None,
+                   age: Optional[int] = None, cert_id: Optional[int] = None,
+                   doctor_id: Optional[int] = None):
+        """Редактирование данных ребенка"""
+        if child_id not in self.children:
+            print(f"Ребенок с ID {child_id} не найден.")
+            return
+
+        child = self.children[child_id]
+
+        if full_name is not None:
+            child.full_name = full_name
+
+        if father_name is not None:
+            child.father_name = father_name
+
+        if mother_name is not None:
+            child.mother_name = mother_name
+
+        if age is not None:
+            child.age = age
+
+        if cert_id is not None:
+            if cert_id not in self.certificates:
+                print(f"Ошибка: Сертификат с ID {cert_id} не существует")
+                return
+            child.cert_id = cert_id
+
+        if doctor_id is not None:
+            if doctor_id not in self.doctors:
+                print(f"Ошибка: Врач с ID {doctor_id} не существует")
+                return
+            child.doctor_id = doctor_id
+
+        print(f"Данные ребенка с ID {child_id} успешно обновлены!")
+
+    # Методы для получения информации
+    def get_children_under_10(self) -> List[Child]:
+        """Получить список детей до 10 лет"""
+        return [child for child in self.children.values() if child.age < 10]
+
+    def get_children_with_different_parents_surnames(self) -> List[Child]:
+        """Получить список детей, у родителей которых разные фамилии"""
+        result = []
+        for child in self.children.values():
+            father_surname = child.father_name.split()[0]
+            mother_surname = child.mother_name.split()[0]
+            if father_surname != mother_surname and mother_surname != father_surname + 'а':
+                result.append(child)
+        return result
+
+    def get_doctors_between_20_and_60(self) -> List[Doctor]:
+        """Получить список врачей в возрасте от 20 до 60 лет"""
+        return [doctor for doctor in self.doctors.values() if 20 <= doctor.age <= 60]
+
+    # Методы для сохранения и загрузки
+    def save_to_csv(self):
+        """Сохранение данных в CSV файлы"""
+        try:
+            # Сохраняем сертификаты
+            with open('certificates.csv', 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ID', 'Номер_сертификата'])
+                for cert in self.certificates.values():
+                    writer.writerow([cert.id, cert.number])
+
+            # Сохраняем врачей
+            with open('doctors.csv', 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ID', 'ФИО', 'Возраст'])
+                for doctor in self.doctors.values():
+                    writer.writerow([doctor.id, doctor.full_name, doctor.age])
+
+            # Сохраняем детей
+            with open('children.csv', 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ID', 'ФИО', 'ФИО_отца', 'ФИО_матери', 'Возраст', 'ID_Сертификата', 'ID_Врача'])
+                for child in self.children.values():
+                    writer.writerow([
+                        child.id,
+                        child.full_name,
+                        child.father_name,
+                        child.mother_name,
+                        child.age,
+                        child.cert_id,
+                        child.doctor_id
+                    ])
+
+            print("Данные успешно сохранены в файлы CSV")
+        except Exception as e:
+            print(f"Ошибка при сохранении файлов: {e}")
+
+    def load_from_csv(self):
+        """Загрузка данных из CSV файлов"""
+        try:
+            # Загружаем сертификаты
+            if os.path.exists('certificates.csv'):
+                with open('certificates.csv', 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    self.certificates = {}
+                    max_id = 0
+                    for row in reader:
+                        cert_id = int(row['ID'])
+                        self.certificates[cert_id] = ProfessionalCertificate(
+                            cert_id,
+                            int(row['Номер_сертификата'])
+                        )
+                        if cert_id > max_id:
+                            max_id = cert_id
+                    self.next_cert_id = max_id + 1 if max_id > 0 else 1
+
+            # Загружаем врачей
+            if os.path.exists('doctors.csv'):
+                with open('doctors.csv', 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    self.doctors = {}
+                    max_id = 0
+                    for row in reader:
+                        doctor_id = int(row['ID'])
+                        self.doctors[doctor_id] = Doctor(
+                            doctor_id,
+                            row['ФИО'],
+                            int(row['Возраст'])
+                        )
+                        if doctor_id > max_id:
+                            max_id = doctor_id
+                    self.next_doctor_id = max_id + 1 if max_id > 0 else 1
+
+            # Загружаем детей
+            if os.path.exists('children.csv'):
+                with open('children.csv', 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    self.children = {}
+                    max_id = 0
+                    for row in reader:
+                        child_id = int(row['ID'])
+                        self.children[child_id] = Child(
+                            child_id,
+                            row['ФИО'],
+                            row['ФИО_отца'],
+                            row['ФИО_матери'],
+                            int(row['Возраст']),
+                            int(row['ID_Сертификата']),
+                            int(row['ID_Врача'])
+                        )
+                        if child_id > max_id:
+                            max_id = child_id
+                    self.next_child_id = max_id + 1 if max_id > 0 else 1
+
+            print("Данные успешно загружены из файлов CSV")
+        except Exception as e:
+            print(f"Ошибка при загрузке файлов: {e}")
+
+
+def print_main_menu():
+    """Вывод главного меню"""
+    print("\n=== Главное меню ===")
+    print("1. Управление сертификатами")
+    print("2. Управление врачами")
+    print("3. Управление детьми")
+    print("4. Специальные отчеты")
+    print("5. Сохранить данные")
+    print("6. Загрузить данные")
+    print("0. Выход")
+
+
+def print_certificates_menu():
+    """Вывод меню для работы с сертификатами"""
+    print("\n=== Управление сертификатами ===")
+    print("1. Добавить сертификат")
+    print("2. Удалить сертификат")
+    print("3. Редактировать сертификат")
+    print("4. Показать все сертификаты")
+    print("0. Назад")
+
+
+def print_doctors_menu():
+    """Вывод меню для работы с врачами"""
+    print("\n=== Управление врачами ===")
+    print("1. Добавить врача")
+    print("2. Удалить врача")
+    print("3. Редактировать врача")
+    print("4. Показать всех врачей")
+    print("0. Назад")
+
+
+def print_children_menu():
+    """Вывод меню для работы с детьми"""
+    print("\n=== Управление детьми ===")
+    print("1. Добавить ребенка")
+    print("2. Удалить ребенка")
+    print("3. Редактировать данные ребенка")
+    print("4. Показать всех детей")
+    print("0. Назад")
+
+
+def print_reports_menu():
+    """Вывод меню отчетов"""
+    print("\n=== Специальные отчеты ===")
+    print("1. Список детей до 10 лет")
+    print("2. Дети, у родителей которых разные фамилии")
+    print("3. Врачи в возрасте от 20 до 60 лет")
+    print("0. Назад")
+
+
+def print_certificates(db: Database):
+    """Вывод списка сертификатов"""
+    print("\nСписок сертификатов:")
+    if not db.certificates:
+        print("Нет данных")
+        return
+
+    for cert in db.certificates.values():
+        print(f"ID: {cert.id}, Номер: {cert.number}")
+
+
+def print_doctors(db: Database):
+    """Вывод списка врачей"""
+    print("\nСписок врачей:")
+    if not db.doctors:
+        print("Нет данных")
+        return
+
+    for doctor in db.doctors.values():
+        print(f"ID: {doctor.id}, ФИО: {doctor.full_name}, Возраст: {doctor.age}")
+
+
+def print_children(db: Database):
+    """Вывод списка детей"""
+    print("\nСписок детей:")
+    if not db.children:
+        print("Нет данных")
+        return
+
+    for child in db.children.values():
+        cert = db.certificates.get(child.cert_id, None)
+        doctor = db.doctors.get(child.doctor_id, None)
+        print(f"ID: {child.id}, ФИО: {child.full_name}")
+        print(f"Отец: {child.father_name}, Мать: {child.mother_name}")
+        print(f"Возраст: {child.age}")
+        print(f"Сертификат: {cert.number if cert else 'N/A'}")
+        print(f"Врач: {doctor.full_name if doctor else 'N/A'}")
+        print("-" * 30)
+
+
+def print_children_list(children: List[Child], db: Database, title: str):
+    """Вывод списка детей с заголовком"""
+    print(f"\n{title}:")
+    if not children:
+        print("Нет данных")
+        return
+
+    for child in children:
+        cert = db.certificates.get(child.cert_id, None)
+        doctor = db.doctors.get(child.doctor_id, None)
+        print(f"ID: {child.id}, ФИО: {child.full_name}")
+        print(f"Отец: {child.father_name}, Мать: {child.mother_name}")
+        print(f"Возраст: {child.age}")
+        print(f"Сертификат: {cert.number if cert else 'N/A'}")
+        print(f"Врач: {doctor.full_name if doctor else 'N/A'}")
+        print("-" * 30)
+
+
+def print_doctors_list(doctors: List[Doctor], title: str):
+    """Вывод списка врачей с заголовком"""
+    print(f"\n{title}:")
+    if not doctors:
+        print("Нет данных")
+        return
+
+    for doctor in doctors:
+        print(f"ID: {doctor.id}, ФИО: {doctor.full_name}, Возраст: {doctor.age}")
+
+
+def manage_certificates(db: Database):
+    """Управление сертификатами"""
+    while True:
+        print_certificates_menu()
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            try:
+                number = int(input("Введите номер сертификата: "))
+                db.add_certificate(number)
+            except ValueError:
+                print("Ошибка: Номер сертификата должен быть целым числом")
+
+        elif choice == "2":
+            print_certificates(db)
+            try:
+                cert_id = int(input("Введите ID сертификата для удаления: "))
+                db.delete_certificate(cert_id)
+            except ValueError:
+                print("Ошибка: ID должен быть целым числом")
+
+        elif choice == "3":
+            print_certificates(db)
+            try:
+                cert_id = int(input("Введите ID сертификата для редактирования: "))
+                new_number = int(input("Введите новый номер сертификата: "))
+                db.edit_certificate(cert_id, new_number)
+            except ValueError:
+                print("Ошибка: ID и номер должны быть целыми числами")
+
+        elif choice == "4":
+            print_certificates(db)
+
+        elif choice == "0":
+            break
+
+        else:
+            print("Неверный ввод. Пожалуйста, выберите действие из списка.")
+
+
+def manage_doctors(db: Database):
+    """Управление врачами"""
+    while True:
+        print_doctors_menu()
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            full_name = input("Введите ФИО врача: ").strip()
+            try:
+                age = int(input("Введите возраст врача: "))
+                db.add_doctor(full_name, age)
+            except ValueError:
+                print("Ошибка: Возраст должен быть целым числом")
+
+        elif choice == "2":
+            print_doctors(db)
+            try:
+                doctor_id = int(input("Введите ID врача для удаления: "))
+                db.delete_doctor(doctor_id)
+            except ValueError:
+                print("Ошибка: ID должен быть целым числом")
+
+        elif choice == "3":
+            print_doctors(db)
+            try:
+                doctor_id = int(input("Введите ID врача для редактирования: "))
+
+                print("Оставьте поле пустым, если не хотите его изменять:")
+                full_name = input("Новое ФИО врача: ").strip()
+                full_name = full_name if full_name else None
+
+                age = None
+                age_input = input("Новый возраст врача: ").strip()
+                if age_input:
+                    age = int(age_input)
+
+                db.edit_doctor(doctor_id, full_name, age)
+            except ValueError:
+                print("Ошибка: ID и возраст должны быть целыми числами")
+
+        elif choice == "4":
+            print_doctors(db)
+
+        elif choice == "0":
+            break
+
+        else:
+            print("Неверный ввод. Пожалуйста, выберите действие из списка.")
+
+
+def manage_children(db: Database):
+    """Управление детьми"""
+    while True:
+        print_children_menu()
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            full_name = input("Введите ФИО ребенка: ").strip()
+            father_name = input("Введите ФИО отца: ").strip()
+            mother_name = input("Введите ФИО матери: ").strip()
+
+            try:
+                age = int(input("Введите возраст ребенка: "))
+
+                print("Доступные сертификаты:")
+                print_certificates(db)
+                cert_id = int(input("Введите ID сертификата: "))
+
+                print("Доступные врачи:")
+                print_doctors(db)
+                doctor_id = int(input("Введите ID врача: "))
+
+                db.add_child(full_name, father_name, mother_name, age, cert_id, doctor_id)
+            except ValueError:
+                print("Ошибка: Возраст, ID сертификата и ID врача должны быть целыми числами")
+
+        elif choice == "2":
+            print_children(db)
+            try:
+                child_id = int(input("Введите ID ребенка для удаления: "))
+                db.delete_child(child_id)
+            except ValueError:
+                print("Ошибка: ID должен быть целым числом")
+
+        elif choice == "3":
+            print_children(db)
+            try:
+                child_id = int(input("Введите ID ребенка для редактирования: "))
+
+                print("Оставьте поле пустым, если не хотите его изменять:")
+                full_name = input("Новое ФИО ребенка: ").strip()
+                full_name = full_name if full_name else None
+
+                father_name = input("Новое ФИО отца: ").strip()
+                father_name = father_name if father_name else None
+
+                mother_name = input("Новое ФИО матери: ").strip()
+                mother_name = mother_name if mother_name else None
+
+                age = None
+                age_input = input("Новый возраст ребенка: ").strip()
+                if age_input:
+                    age = int(age_input)
+
+                cert_id = None
+                cert_input = input("Новый ID сертификата (Enter - не изменять): ").strip()
+                if cert_input:
+                    cert_id = int(cert_input)
+
+                doctor_id = None
+                doctor_input = input("Новый ID врача (Enter - не изменять): ").strip()
+                if doctor_input:
+                    doctor_id = int(doctor_input)
+
+                db.edit_child(
+                    child_id, full_name, father_name, mother_name,
+                    age, cert_id, doctor_id
+                )
+            except ValueError:
+                print("Ошибка: Возраст, ID сертификата и ID врача должны быть целыми числами")
+
+        elif choice == "4":
+            print_children(db)
+
+        elif choice == "0":
+            break
+
+        else:
+            print("Неверный ввод. Пожалуйста, выберите действие из списка.")
+
+
+def show_reports(db: Database):
+    """Показ специальных отчетов"""
+    while True:
+        print_reports_menu()
+        choice = input("Выберите отчет: ")
+
+        if choice == "1":
+            children = db.get_children_under_10()
+            print_children_list(children, db, "Дети до 10 лет")
+
+        elif choice == "2":
+            children = db.get_children_with_different_parents_surnames()
+            print_children_list(children, db, "Дети, у родителей которых разные фамилии")
+
+        elif choice == "3":
+            doctors = db.get_doctors_between_20_and_60()
+            print_doctors_list(doctors, "Врачи в возрасте от 20 до 60 лет")
+
+        elif choice == "0":
+            break
+
+        else:
+            print("Неверный ввод. Пожалуйста, выберите отчет из списка.")
+
+
+def main():
+    """Основная функция программы"""
+    db = Database()
+    db.load_from_csv()
+
+    while True:
+        print_main_menu()
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            manage_certificates(db)
+
+        elif choice == "2":
+            manage_doctors(db)
+
+        elif choice == "3":
+            manage_children(db)
+
+        elif choice == "4":
+            show_reports(db)
+
+        elif choice == "5":
+            db.save_to_csv()
+
+        elif choice == "6":
+            db.load_from_csv()
+
+        elif choice == "0":
+            save = input("Сохранить данные перед выходом? (y/n): ").lower()
+            if save == 'y':
+                db.save_to_csv()
+            print("До свидания!")
+            break
+
+        else:
+            print("Неверный ввод. Пожалуйста, выберите действие из списка.")
+
+
+if __name__ == "__main__":
+    main()
