@@ -1,0 +1,32 @@
+from abc import ABC, abstractmethod
+import math
+
+
+class Shape(ABC):
+    """Абстрактный базовый класс для геометрических фигур"""
+
+    def __init__(self, name):
+        """
+        Конструктор базового класса
+        :param name: название фигуры
+        """
+        self._name = name
+
+    @property
+    def name(self):
+        """Название фигуры (свойство только для чтения)"""
+        return self._name
+
+    @abstractmethod
+    def area(self):
+        """Виртуальный метод для вычисления площади (должен быть переопределен)"""
+        pass
+
+    @abstractmethod
+    def perimeter(self):
+        """Виртуальный метод для вычисления периметра (должен быть переопределен)"""
+        pass
+
+    def info(self):
+        """Метод для получения информации о фигуре (может быть перегружен)"""
+        return f"Фигура: {self.name}\nПлощадь: {self.area():.2f}\nПериметр: {self.perimeter():.2f}"
