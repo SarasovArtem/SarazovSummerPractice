@@ -1,0 +1,394 @@
+import csv
+import os
+from datetime import time
+from typing import Dict, List, Optional
+
+
+class DayOfWeek:
+    """Класс для представления дня недели"""
+
+    def __init__(self, id: int, name: str):
+        self.id = id
+        self.name = name
+
+
+class ClassPeriod:
+    """Класс для представления пары (временного интервала)"""
+
+    def __init__(self, id: int, number: int, start_time: time, end_time: time):
+        self.id = id
+        self.number = number
+        self.start_time = start_time
+        self.end_time = end_time
+
+
+class Subject:
+    """Класс для представления дисциплины"""
+
+    def __init__(self, id: int, name: str, day_id: int, period_id: int):
+        self.id = id
+        self.name = name
+        self.day_id = day_id
+        self.period_id = period_id
+
+
+class Database:
+    """Класс для работы с базой данных"""
+
+    def __init__(self):
+        self.days: Dict[int, DayOfWeek] = {}
+        self.periods: Dict[int, ClassPeriod] = {}
+        self.subjects: Dict[int, Subject] = {}
+        self.next_day_id = 1
+        self.next_period_id = 1
+        self.next_subject_id = 1
+
+        # Инициализация стандартных значений
+        self.initialize_default_data()
+
+    def initialize_default_data(self):
+        """Инициализация стандартных дней недели и пар"""
+        default_days = [
+            (1, "Понедельник"),
+            (2, "Вторник"),
+            (3, "Среда"),
+            (4, "Четверг"),
+            (5, "Пятница"),
+            (6, "Суббота"),
+            (7, "Воскресенье")
+        ]
+
+        default_periods = [
+            (1, 1, time(8, 0), time(9, 35)),
+            (2, 2, time(9, 50), time(11, 25)),
+            (3, 3, time(11, 40), time(13, 15)),
+            (4, 4, time(13, 45), time(15, 20)),
+            (5, 5, time(15, 35), time(17, 10)),
+            (6, 6, time(17, 25), time(19, 0)),
+            (7, 7, time(19, 15), time(20, 50)),
+            (8, 8, time(21, 5), time(22, 35))
+        ]
+
+        for id, name in default_days:
+            self.days[id] = DayOfWeek(id, name)
+            if id >= self.next_day_id:
+                self.next_day_id = id + 1
+
+        for id, number, start, end in default_periods:
+            self.periods[id] = ClassPeriod(id, number, start, end)
+            if id >= self.next_period_id:
+                self.next_period_id = id + 1
+
+    def add_subject(self, name: str, day_id: int, period_id: int):
+        """Добавление новой дисциплины"""
+        if day_id not in self.days:
+            print(f"Ошибка: День недели с ID {day_id} не существует")
+            return
+
+        if period_id not in self.periods:
+            print(f"Ошибка: Пара с ID {period_id} не существует")
+            return
+
+        # Проверяем, нет ли уже дисциплины в этот день и время
+        for subject in self.subjects.values():
+            if subject.day_id == day_id and subject.period_id == period_id:
+                print(f"Ошибка: В это время уже есть другая дисциплина")
+                return
+
+        self.subjects[self.next_subject_id] = Subject(
+            self.next_subject_id, name, day_id, period_id
+        )
+        self.next_subject_id += 1
+        print(f"Дисциплина '{name}' успешно добавлена!")
+
+    def delete_subject(self, subject_id: int):
+        """Удаление дисциплины"""
+        if subject_id in self.subjects:
+            del self.subjects[subject_id]
+            print(f"Дисциплина с ID {subject_id} удалена.")
+        else:
+            print(f"Дисциплина с ID {subject_id} не найдена.")
+
+    def edit_subject(self, subject_id: int, name: Optional[str] = None,
+                     day_id: Optional[int] = None, period_id: Optional[int] = None):
+        """Редактирование дисциплины"""
+        if subject_id not in self.subjects:
+            print(f"Дисциплина с ID {subject_id} не найдена.")
+            return
+
+        subject = self.subjects[subject_id]
+
+        if name is not None:
+            subject.name = name
+
+        if day_id is not None:
+            if day_id not in self.days:
+                print(f"Ошибка: День недели с ID {day_id} не существует")
+                return
+            subject.day_id = day_id
+
+        if period_id is not None:
+            if period_id not in self.periods:
+                print(f"Ошибка: Пара с ID {period_id} не существует")
+                return
+            subject.period_id = period_id
+
+        print(f"Дисциплина с ID {subject_id} успешно обновлена.")
+
+    def show_subjects_schedule(self):
+        """Вывод расписания дисциплин"""
+        if not self.subjects:
+            print("Нет данных о дисциплинах.")
+            return
+
+        print("\nРасписание дисциплин:")
+        for subject in self.subjects.values():
+            day = self.days[subject.day_id].name
+            period = self.periods[subject.period_id]
+            print(
+                f"Дисциплина: {subject.name}, "
+                f"День: {day}, "
+                f"Пара: {period.number} "
+                f"({period.start_time.strftime('%H:%M')}-{period.end_time.strftime('%H:%M')})"
+            )
+
+    def count_classes_per_day(self):
+        """Подсчет количества пар по дням недели"""
+        if not self.subjects:
+            print("Нет данных о дисциплинах.")
+            return
+
+        day_counts = {}
+        for subject in self.subjects.values():
+            day_name = self.days[subject.day_id].name
+            if day_name in day_counts:
+                day_counts[day_name] += 1
+            else:
+                day_counts[day_name] = 1
+
+        print("\nКоличество пар по дням недели:")
+        for day, count in sorted(day_counts.items()):
+            print(f"{day}: {count} пар")
+
+    def save_to_csv(self):
+        """Сохранение данных в CSV файлы"""
+        try:
+            # Сохраняем дни недели
+            with open('days.csv', 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ID', 'Название'])
+                for day in self.days.values():
+                    writer.writerow([day.id, day.name])
+
+            # Сохраняем пары
+            with open('periods.csv', 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ID', 'Номер_пары', 'Время_начала', 'Время_конца'])
+                for period in self.periods.values():
+                    writer.writerow([
+                        period.id,
+                        period.number,
+                        period.start_time.strftime('%H:%M'),
+                        period.end_time.strftime('%H:%M')
+                    ])
+
+            # Сохраняем дисциплины
+            with open('subjects.csv', 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['ID', 'Название', 'ID_дня_недели', 'ID_номера_пары'])
+                for subject in self.subjects.values():
+                    writer.writerow([subject.id, subject.name, subject.day_id, subject.period_id])
+
+            print("Данные успешно сохранены в файлы CSV")
+        except Exception as e:
+            print(f"Ошибка при сохранении файлов: {e}")
+
+    def load_from_csv(self):
+        """Загрузка данных из CSV файлов"""
+        try:
+            # Загружаем дни недели
+            if os.path.exists('days.csv'):
+                with open('days.csv', 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    self.days = {}
+                    for row in reader:
+                        day_id = int(row['ID'])
+                        self.days[day_id] = DayOfWeek(day_id, row['Название'])
+                        if day_id >= self.next_day_id:
+                            self.next_day_id = day_id + 1
+
+            # Загружаем пары
+            if os.path.exists('periods.csv'):
+                with open('periods.csv', 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    self.periods = {}
+                    for row in reader:
+                        period_id = int(row['ID'])
+                        start_time = time.fromisoformat(row['Время_начала'])
+                        end_time = time.fromisoformat(row['Время_конца'])
+                        self.periods[period_id] = ClassPeriod(
+                            period_id,
+                            int(row['Номер_пары']),
+                            start_time,
+                            end_time
+                        )
+                        if period_id >= self.next_period_id:
+                            self.next_period_id = period_id + 1
+
+            # Загружаем дисциплины
+            if os.path.exists('subjects.csv'):
+                with open('subjects.csv', 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    self.subjects = {}
+                    for row in reader:
+                        subject_id = int(row['ID'])
+                        self.subjects[subject_id] = Subject(
+                            subject_id,
+                            row['Название'],
+                            int(row['ID_дня_недели']),
+                            int(row['ID_номера_пары'])
+                        )
+                        if subject_id >= self.next_subject_id:
+                            self.next_subject_id = subject_id + 1
+
+            print("Данные успешно загружены из файлов CSV")
+        except Exception as e:
+            print(f"Ошибка при загрузке файлов: {e}")
+
+
+def print_menu():
+    """Вывод основного меню"""
+    print("\n=== Управление расписанием дисциплин ===")
+    print("1. Добавить дисциплину")
+    print("2. Удалить дисциплину")
+    print("3. Редактировать дисциплину")
+    print("4. Показать расписание дисциплин")
+    print("5. Показать количество пар по дням недели")
+    print("6. Сохранить данные в файлы")
+    print("7. Загрузить данные из файлов")
+    print("0. Выход")
+
+
+def get_day_input(db: Database) -> int:
+    """Получение ID дня недели от пользователя"""
+    print("\nДоступные дни недели:")
+    for day in db.days.values():
+        print(f"{day.id}: {day.name}")
+
+    while True:
+        try:
+            day_id = int(input("Введите ID дня недели: "))
+            if day_id in db.days:
+                return day_id
+            print("Ошибка: Введите корректный ID дня недели")
+        except ValueError:
+            print("Ошибка: Введите число")
+
+
+def get_period_input(db: Database) -> int:
+    """Получение ID пары от пользователя"""
+    print("\nДоступные пары:")
+    for period in db.periods.values():
+        print(
+            f"{period.id}: Пара {period.number} "
+            f"({period.start_time.strftime('%H:%M')}-{period.end_time.strftime('%H:%M')})"
+        )
+
+    while True:
+        try:
+            period_id = int(input("Введите ID пары: "))
+            if period_id in db.periods:
+                return period_id
+            print("Ошибка: Введите корректный ID пары")
+        except ValueError:
+            print("Ошибка: Введите число")
+
+
+def main():
+    """Основная функция программы"""
+    db = Database()
+    db.load_from_csv()
+
+    while True:
+        print_menu()
+        choice = input("Выберите действие: ")
+
+        if choice == "1":
+            print("\nДобавление новой дисциплины")
+            name = input("Введите название дисциплины: ").strip()
+            day_id = get_day_input(db)
+            period_id = get_period_input(db)
+            db.add_subject(name, day_id, period_id)
+
+        elif choice == "2":
+            print("\nУдаление дисциплины")
+            if not db.subjects:
+                print("Нет данных о дисциплинах.")
+                continue
+
+            print("Список дисциплин:")
+            for subject in db.subjects.values():
+                print(f"ID: {subject.id}, Название: {subject.name}")
+
+            try:
+                subject_id = int(input("Введите ID дисциплины для удаления: "))
+                db.delete_subject(subject_id)
+            except ValueError:
+                print("Ошибка: Введите число")
+
+        elif choice == "3":
+            print("\nРедактирование дисциплины")
+            if not db.subjects:
+                print("Нет данных о дисциплинах.")
+                continue
+
+            print("Список дисциплин:")
+            for subject in db.subjects.values():
+                print(f"ID: {subject.id}, Название: {subject.name}")
+
+            try:
+                subject_id = int(input("Введите ID дисциплины для редактирования: "))
+
+                print("Оставьте поле пустым, если не хотите его изменять:")
+                name = input("Новое название дисциплины: ").strip()
+                name = name if name else None
+
+                day_id = None
+                day_input = input("Новый ID дня недели (Enter - пропустить): ").strip()
+                if day_input:
+                    day_id = int(day_input)
+
+                period_id = None
+                period_input = input("Новый ID пары (Enter - пропустить): ").strip()
+                if period_input:
+                    period_id = int(period_input)
+
+                db.edit_subject(subject_id, name, day_id, period_id)
+            except ValueError:
+                print("Ошибка: Введите число")
+
+        elif choice == "4":
+            db.show_subjects_schedule()
+
+        elif choice == "5":
+            db.count_classes_per_day()
+
+        elif choice == "6":
+            db.save_to_csv()
+
+        elif choice == "7":
+            db.load_from_csv()
+
+        elif choice == "0":
+            save = input("Сохранить данные перед выходом? (y/n): ").lower()
+            if save == 'y':
+                db.save_to_csv()
+            print("До свидания!")
+            break
+
+        else:
+            print("Неверный ввод. Пожалуйста, выберите действие из списка.")
+
+
+if __name__ == "__main__":
+    main()
