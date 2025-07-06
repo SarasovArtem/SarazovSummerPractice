@@ -1,0 +1,41 @@
+from shape import Shape
+import math
+
+
+class Ellipse(Shape):
+    """Класс эллипса, наследующий от Shape"""
+
+    def __init__(self, major_axis, minor_axis):
+        """
+        Конструктор эллипса
+        :param major_axis: большая полуось
+        :param minor_axis: малая полуось
+        """
+        super().__init__("Эллипс")  # Вызов конструктора родительского класса
+        self._major_axis = major_axis
+        self._minor_axis = minor_axis
+
+    @property
+    def major_axis(self):
+        """Большая полуось эллипса"""
+        return self._major_axis
+
+    @property
+    def minor_axis(self):
+        """Малая полуось эллипса"""
+        return self._minor_axis
+
+    def area(self):
+        """Вычисление площади эллипса"""
+        return math.pi * self.major_axis * self.minor_axis
+
+    def perimeter(self):
+        """Вычисление периметра эллипса (приближенная формула)"""
+        a, b = self.major_axis, self.minor_axis
+        return math.pi * (3 * (a + b) - math.sqrt((3 * a + b) * (a + 3 * b)))
+
+    def info(self):
+        """Перегруженный метод для получения информации об эллипсе"""
+        return (f"{super().info()}\n"
+                f"Большая полуось: {self.major_axis}\n"
+                f"Малая полуось: {self.minor_axis}")
